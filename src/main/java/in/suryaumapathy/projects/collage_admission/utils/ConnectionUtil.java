@@ -1,22 +1,32 @@
 package in.suryaumapathy.projects.collage_admission.utils;
 
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Properties;
 
 public class ConnectionUtil {
 
 	public static Connection getConnection() {
 
 		Connection conn = null;
-		String url = "jdbc:mysql://localhost/collage_admission";
-		String user = "root";
-		String password = "Root@123";
+		String url = null; // "jdbc:mysql://localhost/collage_admission";
+		String user = null; // "root";
+		String password = null; // "Root@123";
 
 		try {
-
+			
+			Properties props = new Properties();
+			InputStream input = ConnectionUtil.class.getClassLoader().getResourceAsStream("application.properties");
+			props.load(input);
+			
+			url = props.getProperty("db.url");
+			user = props.getProperty("db.user");
+			password = props.getProperty("db.password");
+			
 			Class.forName("com.mysql.cj.jdbc.Driver");
 
 			// Create a Connection to the Database
@@ -53,12 +63,11 @@ public class ConnectionUtil {
 
 	public static void close(Connection conn, PreparedStatement ps, ResultSet rs) {
 		try {
-			
-			if(rs != null) {
+
+			if (rs != null) {
 				rs.close();
 			}
-			
-			
+
 			if (ps != null) {
 				ps.close();
 			}
@@ -66,12 +75,11 @@ public class ConnectionUtil {
 			if (conn != null) {
 				conn.close();
 			}
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 
-		
 	}
 
 }

@@ -1,2 +1,7 @@
-D:\Eclipse_IDE_Workspace\collage_admission\src\test\java\in\suryaumapthy\projects\collage_admission\service\TestStudentDepartment.java
-D:\Eclipse_IDE_Workspace\collage_admission\src\test\java\in\suryaumapthy\projects\collage_admission\service\TestStudentService.java
+C:\Softwares\Eclipse_IDE_Workspace\collage_admission\src\test\java\in\suryaumapthy\projects\collage_admission\service\TestUpdateStudentDepartment.java
+C:\Softwares\Eclipse_IDE_Workspace\collage_admission\src\test\java\in\suryaumapthy\projects\collage_admission\service\TestStudentCount.java
+C:\Softwares\Eclipse_IDE_Workspace\collage_admission\src\test\java\in\suryaumapthy\projects\collage_admission\service\TestRemoveStudent.java
+C:\Softwares\Eclipse_IDE_Workspace\collage_admission\src\test\java\in\suryaumapthy\projects\collage_admission\service\TestFindStudentDepartmentByEmail.java
+C:\Softwares\Eclipse_IDE_Workspace\collage_admission\src\test\java\in\suryaumapthy\projects\collage_admission\service\TestFindByStudentId.java
+C:\Softwares\Eclipse_IDE_Workspace\collage_admission\src\test\java\in\suryaumapthy\projects\collage_admission\service\TestFindByDepartmentName.java
+C:\Softwares\Eclipse_IDE_Workspace\collage_admission\src\test\java\in\suryaumapthy\projects\collage_admission\service\TestStudentDetails.java

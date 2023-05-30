@@ -2,8 +2,8 @@ in\suryaumapathy\projects\collage_admission\service\StudentService.class
 in\suryaumapathy\projects\collage_admission\dao\DepartmentDao.class
 in\suryaumapathy\projects\collage_admission\model\Student.class
 in\suryaumapathy\projects\collage_admission\model\Department.class
-in\suryaumapathy\projects\collage_admission\dao\StudentDao.class
 in\suryaumapathy\projects\collage_admission\model\StudentDepartment.class
+in\suryaumapathy\projects\collage_admission\dao\StudentDao.class
 in\suryaumapathy\projects\collage_admission\utils\ConnectionUtil.class
 in\suryaumapathy\projects\collage_admission\App.class
 in\suryaumapathy\projects\collage_admission\dao\StudentDepartmentDao.class
