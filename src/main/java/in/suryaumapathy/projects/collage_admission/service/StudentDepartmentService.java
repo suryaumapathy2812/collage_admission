@@ -1,6 +1,5 @@
 package in.suryaumapathy.projects.collage_admission.service;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;

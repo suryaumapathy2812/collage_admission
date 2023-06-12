@@ -313,45 +313,118 @@ public class StudentDepartmentDao {
 
 	}
 
-	
-	public String findStudentDepartmentByEmail(String email) throws Exception{
-		
+	public String findStudentDepartmentByEmail(String email) throws Exception {
+
 		Connection conn = null;
-		PreparedStatement ps= null;
+		PreparedStatement ps = null;
 		ResultSet rs = null;
-		
+
 		String response = null;
-		
+
 		try {
-			
+
 			String query = "SELECT d.name FROM departments d WHERE d.id =  ( SELECT sc.department_id  FROM student_class sc WHERE sc.student_id = ( SELECT id FROM students WHERE email=?))";
 			conn = ConnectionUtil.getConnection();
 			ps = conn.prepareStatement(query);
-			
-			
+
 			ps.setString(1, email);
-		
+
 			rs = ps.executeQuery();
-			
-			if(rs.next()) {
+
+			if (rs.next()) {
 				response = rs.getString("name");
-			}else {
+			} else {
 				throw new Exception("Student not found");
 			}
-			
-			
+
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			throw new Exception(e.getMessage());
 		} finally {
 			ConnectionUtil.close(conn, ps, rs);
 		}
-		
+
 		return response;
 	}
-	
-	
-	
+
+	public List<Object> findAllStudentsNotEnrolled() throws Exception {
+
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		List<Object> response = new ArrayList<>();
+
+		try {
+
+			String sql = "select * from students where id not in ( select student_id from student_class )";
+			conn = ConnectionUtil.getConnection();
+			ps = conn.prepareStatement(sql);
+
+			rs = ps.executeQuery();
+
+			if (rs.next()) {
+
+				Map<String, String> obj = new HashMap<>();
+				obj.put("id", rs.getInt("id") + "");
+				obj.put("name", rs.getString("name"));
+				obj.put("email", rs.getString("email"));
+				obj.put("mobile_no", rs.getLong("mobile_no") + "");
+				obj.put("gender", rs.getString("gender"));
+
+				response.add(obj);
+			}
+
+			return response;
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			throw new Exception("Failed to access student details");
+		} finally {
+			ConnectionUtil.close(conn, ps, rs);
+		}
+
+	}
+
+	public List<Object> FindAllStudentWithClassName() throws Exception {
+
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		List<Object> response = new ArrayList<>();
+
+		try {
+
+			String sql = "select s.id, s.name, s.email, sc.department_id from students s left outer join student_class sc on s.id = sc.student_id";
+
+			conn = ConnectionUtil.getConnection();
+			ps = conn.prepareStatement(sql);
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				Map<String, String> obj = new HashMap<>();
+				obj.put("id", "" + rs.getInt("id"));
+				obj.put("name", rs.getString("name"));
+				obj.put("email", rs.getString("email"));
+				obj.put("departmentId", "" + rs.getInt("department_id"));
+
+				response.add(obj);
+			}
+			
+			return response;
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			throw new Exception("Failed retieve student details");
+		} finally {
+			ConnectionUtil.close(conn, ps, rs);
+		}
+
+	}
+
 	/**
 	 * 
 	 * @param rs
