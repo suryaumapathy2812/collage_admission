@@ -6,6 +6,9 @@ import java.util.regex.Pattern;
 
 import in.suryaumapathy.projects.collage_admission.dao.StudentDepartmentDao;
 import in.suryaumapathy.projects.collage_admission.dto.StudentDepartmentDetailsDto;
+import in.suryaumapathy.projects.collage_admission.exception.InvalidDepartmentException;
+import in.suryaumapathy.projects.collage_admission.exception.InvalidEmailException;
+import in.suryaumapathy.projects.collage_admission.exception.InvalidStudentException;
 import in.suryaumapathy.projects.collage_admission.model.StudentDepartment;
 
 public class StudentDepartmentService {
@@ -20,7 +23,7 @@ public class StudentDepartmentService {
 
 		// Validation
 		if (studentId <= 0) {
-			throw new Exception("Invalid Student Id");
+			throw new InvalidStudentException("Invalid Student Id");
 		}
 
 		StudentDepartment studentDept = this.dao.findByStudentId(studentId);
@@ -31,7 +34,7 @@ public class StudentDepartmentService {
 
 		// Validation
 		if (departmentId <= 0) {
-			throw new Exception("Invalid Department Id");
+			throw new InvalidDepartmentException("Invalid Department Id");
 		}
 
 		List<StudentDepartment> departmentStudents = this.dao.findByDepartmentId(departmentId);
@@ -42,7 +45,7 @@ public class StudentDepartmentService {
 
 		// Validation
 		if (departmentName == null || departmentName.trim().equals("")) {
-			throw new Exception("Invalid Department Name");
+			throw new InvalidDepartmentException("Invalid Department Name");
 		}
 
 		List<StudentDepartment> departmentStudents = this.dao.findByDepartmentName(departmentName);
@@ -50,6 +53,15 @@ public class StudentDepartmentService {
 	}
 
 	public StudentDepartment updateStudentDepartment(int studentId, String departmentName) throws Exception {
+
+		if (studentId > 0) {
+			throw new InvalidStudentException("Invalid Student ID");
+		}
+
+		if (departmentName == null || departmentName.trim().equals("")) {
+			throw new InvalidDepartmentException("Invalid Department Name");
+		}
+
 		StudentDepartment updatedStudentDepartment = this.dao.update(studentId, departmentName);
 		return updatedStudentDepartment;
 	}
@@ -57,7 +69,7 @@ public class StudentDepartmentService {
 	public void updateStudentStatus(int studentId) throws Exception {
 
 		if (studentId > 0) {
-			throw new Exception("Invalid Studebt ID");
+			throw new InvalidStudentException("Invalid Student ID");
 		}
 
 		this.dao.updateStatus(studentId);
@@ -78,16 +90,15 @@ public class StudentDepartmentService {
 	public String findStudentDepartmentByEmail(String email) throws Exception {
 
 		System.out.println(email);
-
 		if (email == null || email.trim().equals("")) {
-			throw new Exception("Invalid Email Address");
+			throw new InvalidEmailException("Invalid Email Address");
 		}
 
 		String regex = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
 		Boolean isMatch = Pattern.matches(regex, email);
 
 		if (isMatch == false) {
-			throw new Exception("Invalid Email Pattern");
+			throw new InvalidEmailException("Invalid Email Pattern");
 		}
 
 		String departmentName = this.dao.findStudentDepartmentByEmail(email);

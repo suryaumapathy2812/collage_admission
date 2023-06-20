@@ -4,13 +4,17 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import in.suryaumapathy.projects.collage_admission.dto.StudentDepartmentDetailsDto;
+import in.suryaumapathy.projects.collage_admission.exception.InvalidEmailException;
+import in.suryaumapathy.projects.collage_admission.exception.StudentDepartmentValidationException;
+import in.suryaumapathy.projects.collage_admission.exception.StudentNotFoundException;
 import in.suryaumapathy.projects.collage_admission.model.StudentDepartment;
 import in.suryaumapathy.projects.collage_admission.utils.ConnectionUtil;
 
@@ -26,6 +30,10 @@ public class StudentDepartmentDao {
 	 * @throws Exception
 	 */
 	public StudentDepartment findByStudentId(int studentId) throws Exception {
+
+		if (studentId < 0) {
+			throw new StudentDepartmentValidationException("Invalid Student ID: Student ID cannot be less than zero");
+		}
 
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -52,6 +60,10 @@ public class StudentDepartmentDao {
 			ConnectionUtil.close(conn, ps, rs);
 		}
 
+		if (studentDept == null) {
+			throw new StudentDepartmentValidationException("No StudentDepartment found for studentId: " + studentId);
+		}
+
 		return studentDept;
 
 	}
@@ -63,6 +75,10 @@ public class StudentDepartmentDao {
 	 * @throws Exception
 	 */
 	public List<StudentDepartment> findByDepartmentId(int departmentId) throws Exception {
+
+		if (departmentId <= 0) {
+			throw new StudentDepartmentValidationException("Invalid department ID");
+		}
 
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -100,6 +116,11 @@ public class StudentDepartmentDao {
 	 * @throws Exception
 	 */
 	public List<StudentDepartment> findByDepartmentName(String departmentName) throws Exception {
+		if (departmentName == null || departmentName.trim().isEmpty()) {
+			throw new StudentDepartmentValidationException(
+					"Invalid Department Name: Department Name cannot be null or empty");
+		}
+
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -135,7 +156,15 @@ public class StudentDepartmentDao {
 	 * @return
 	 * @throws SQLException
 	 */
-	public void update(int studentId, int departmentId) throws SQLException {
+	public void update(int studentId, int departmentId) throws SQLException, StudentDepartmentValidationException {
+
+		if (studentId <= 0) {
+			throw new StudentDepartmentValidationException("Invalid Student ID: Student ID must be greater than zero");
+		}
+
+		if (departmentId <= 0) {
+			throw new StudentDepartmentValidationException("Invalid Department ID: Department ID must be greater than zero");
+		}
 
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -152,6 +181,10 @@ public class StudentDepartmentDao {
 
 			System.out.println("before executeUpdate ==========================>");
 			int rowsAffected = ps.executeUpdate();
+
+			if (rowsAffected == 0) {
+				throw new StudentDepartmentValidationException("Update failed: No record found with studentId: " + studentId);
+			}
 
 			// System.out.println("Affected rows: ==========================> " +
 			// rowsAffected);
@@ -173,7 +206,17 @@ public class StudentDepartmentDao {
 	 * @return
 	 * @throws SQLException
 	 */
-	public StudentDepartment update(int studentId, String departmentName) throws SQLException {
+	public StudentDepartment update(int studentId, String departmentName)
+			throws SQLException, StudentDepartmentValidationException {
+
+		if (studentId <= 0) {
+			throw new StudentDepartmentValidationException("Invalid Student ID: Student ID must be greater than zero");
+		}
+		if (departmentName == null || departmentName.trim().isEmpty()) {
+			throw new StudentDepartmentValidationException(
+					"Invalid Department Name: Department Name cannot be null or empty");
+		}
+
 		Connection conn = null;
 		PreparedStatement ps = null;
 
@@ -190,6 +233,10 @@ public class StudentDepartmentDao {
 
 			int rowsAffected = ps.executeUpdate();
 			System.out.println("Affected rows: ==========================> " + rowsAffected);
+
+			if (rowsAffected == 0) {
+				throw new StudentDepartmentValidationException("Update failed: No record found with studentId: " + studentId);
+			}
 
 			studDept = this.findByStudentId(studentId);
 
@@ -211,6 +258,11 @@ public class StudentDepartmentDao {
 	 * @throws Exception
 	 */
 	public boolean updateStatus(int studentId) throws Exception {
+
+		if (studentId <= 0) {
+			throw new StudentDepartmentValidationException("Invalid Student ID: Student ID must be greater than zero");
+		}
+
 		Connection conn = null;
 		PreparedStatement ps = null;
 
@@ -313,7 +365,15 @@ public class StudentDepartmentDao {
 
 	}
 
-	public String findStudentDepartmentByEmail(String email) throws Exception {
+	public String findStudentDepartmentByEmail(String email) throws InvalidEmailException, Exception,StudentNotFoundException  {
+
+		// Check if email is valid
+		String regex = "^[A-Za-z0-9+_.-]+@(.+)$";
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(email);
+		if (!matcher.matches()) {
+			throw new InvalidEmailException("Invalid email format: " + email);
+		}
 
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -334,7 +394,7 @@ public class StudentDepartmentDao {
 			if (rs.next()) {
 				response = rs.getString("name");
 			} else {
-				throw new Exception("Student not found");
+				throw new StudentNotFoundException("Student not found with email: " + email);
 			}
 
 		} catch (Exception e) {
@@ -378,7 +438,6 @@ public class StudentDepartmentDao {
 			return response;
 
 		} catch (Exception e) {
-			// TODO: handle exception
 			throw new Exception("Failed to access student details");
 		} finally {
 			ConnectionUtil.close(conn, ps, rs);
@@ -413,7 +472,7 @@ public class StudentDepartmentDao {
 
 				response.add(obj);
 			}
-			
+
 			return response;
 
 		} catch (Exception e) {
