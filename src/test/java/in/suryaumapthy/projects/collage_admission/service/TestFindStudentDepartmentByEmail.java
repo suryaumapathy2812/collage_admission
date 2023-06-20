@@ -3,18 +3,24 @@ package in.suryaumapthy.projects.collage_admission.service;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import in.suryaumapathy.projects.collage_admission.service.StudentDepartmentService;
 
 public class TestFindStudentDepartmentByEmail {
 
+	StudentDepartmentService service;
+
+	@BeforeEach
+	public void setUp() {
+		service = new StudentDepartmentService();
+	}
+
 	// Feature 8: Find Department for the given student email id
 	// With valid email Address
 	@Test
 	public void testFindStudentDepartmentByEmailId() throws Exception {
-
-		StudentDepartmentService service = new StudentDepartmentService();
 
 		String email = "john@example.com";
 
@@ -35,7 +41,6 @@ public class TestFindStudentDepartmentByEmail {
 	@Test
 	public void testFindStudentDepartmentByEmailIdNull() throws Exception {
 
-		StudentDepartmentService service = new StudentDepartmentService();
 		String email = null;
 
 		try {
@@ -54,7 +59,6 @@ public class TestFindStudentDepartmentByEmail {
 	@Test
 	public void testFindStudentDepartmentByEmailIdPattern() throws Exception {
 
-		StudentDepartmentService service = new StudentDepartmentService();
 		String email = "@example.com";
 
 		try {
@@ -73,7 +77,6 @@ public class TestFindStudentDepartmentByEmail {
 	@Test
 	public void testFindStudentDepartmentByEmailIdNewEmail() throws Exception {
 
-		StudentDepartmentService service = new StudentDepartmentService();
 		String email = "surya@example.com";
 
 		try {
