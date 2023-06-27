@@ -8,85 +8,87 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import in.suryaumapathy.projects.collage_admission.exception.PersistanceException;
 import in.suryaumapathy.projects.collage_admission.model.Department;
 import in.suryaumapathy.projects.collage_admission.utils.ConnectionUtil;
 
 public class DepartmentDao {
 
-	Connection conn;
-	PreparedStatement ps;
-	Statement stmt;
-
-	public DepartmentDao() throws Exception {
-		conn = ConnectionUtil.getConnection();
-		stmt = conn.createStatement();
-	}
-
-	public Department[] getAllDepartments() throws Exception {
+	public Department[] getAllDepartments() throws PersistanceException {
+		Connection conn;
+		PreparedStatement ps;
 
 		List<Department> departmentList = new ArrayList<Department>();
 
 		try {
-			String query = "SELECT `id`, `name`  FROM departments;";
-			PreparedStatement stmt = conn.prepareStatement(query);
 
-			ResultSet rs = stmt.executeQuery();
+			conn = ConnectionUtil.getConnection();
+
+			String query = "SELECT `id`, `name`  FROM departments;";
+			ps = conn.prepareStatement(query);
+
+			ResultSet rs = ps.executeQuery();
 
 			while (rs.next()) {
 				departmentList.add(toRow(rs));
 			}
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
-			throw new Exception(e);
+			throw new PersistanceException(e);
 
 		}
 		return (Department[]) departmentList.toArray();
 
 	}
 
-	public Department getDepartment(int departmentId) throws Exception {
+	public Department getDepartment(int departmentId) throws PersistanceException {
 
+		Connection conn;
+		PreparedStatement ps;
 		Department departmentDetails = null;
 
 		try {
+			conn = ConnectionUtil.getConnection();
 			String query = "SELECT ( `id`, `name` ) FROM departments WHERE id = ?;";
-			PreparedStatement stmt = conn.prepareStatement(query);
-			stmt.setInt(1, departmentId);
+			ps = conn.prepareStatement(query);
+			ps.setInt(1, departmentId);
 
-			ResultSet rs = stmt.executeQuery();
+			ResultSet rs = ps.executeQuery();
 
 			while (rs.next()) {
 				departmentDetails = toRow(rs);
 			}
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
-			throw new Exception(e);
+			throw new PersistanceException(e);
 
 		}
 		return departmentDetails;
 
 	}
 
-	public Department getDepartment(String departmentName) throws Exception {
-
+	public Department getDepartment(String departmentName) throws PersistanceException {
+		Connection conn;
+		PreparedStatement ps;
 		Department departmentDetails = null;
 
 		try {
+			conn = ConnectionUtil.getConnection();
 			String query = "SELECT ( `id`, `name` ) FROM departments WHERE name = ? ;";
-			PreparedStatement stmt = conn.prepareStatement(query);
-			stmt.setString(1, departmentName);
+			ps = conn.prepareStatement(query);
+			ps.setString(1, departmentName);
 
-			ResultSet rs = stmt.executeQuery();
+			ResultSet rs = ps.executeQuery();
 
 			while (rs.next()) {
 				departmentDetails = toRow(rs);
 			}
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
-			throw new Exception(e);
+			throw new PersistanceException(e);
 
 		}
 		return departmentDetails;

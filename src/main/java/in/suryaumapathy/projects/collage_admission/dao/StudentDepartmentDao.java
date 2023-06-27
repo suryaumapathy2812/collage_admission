@@ -8,13 +8,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 import in.suryaumapathy.projects.collage_admission.dto.StudentDepartmentDetailsDto;
-import in.suryaumapathy.projects.collage_admission.exception.InvalidEmailException;
-import in.suryaumapathy.projects.collage_admission.exception.StudentDepartmentValidationException;
-import in.suryaumapathy.projects.collage_admission.exception.StudentNotFoundException;
+import in.suryaumapathy.projects.collage_admission.exception.PersistanceException;
 import in.suryaumapathy.projects.collage_admission.model.StudentDepartment;
 import in.suryaumapathy.projects.collage_admission.utils.ConnectionUtil;
 
@@ -29,11 +26,7 @@ public class StudentDepartmentDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public StudentDepartment findByStudentId(int studentId) throws Exception {
-
-		if (studentId < 0) {
-			throw new StudentDepartmentValidationException("Invalid Student ID: Student ID cannot be less than zero");
-		}
+	public StudentDepartment findByStudentId(int studentId) throws PersistanceException {
 
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -53,15 +46,12 @@ public class StudentDepartmentDao {
 				studentDept = toRow(rs);
 			}
 
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
+			throw new PersistanceException(e);
 		} finally {
 			ConnectionUtil.close(conn, ps, rs);
-		}
-
-		if (studentDept == null) {
-			throw new StudentDepartmentValidationException("No StudentDepartment found for studentId: " + studentId);
 		}
 
 		return studentDept;
@@ -74,11 +64,7 @@ public class StudentDepartmentDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<StudentDepartment> findByDepartmentId(int departmentId) throws Exception {
-
-		if (departmentId <= 0) {
-			throw new StudentDepartmentValidationException("Invalid department ID");
-		}
+	public List<StudentDepartment> findByDepartmentId(int departmentId) throws PersistanceException {
 
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -88,7 +74,7 @@ public class StudentDepartmentDao {
 		try {
 			conn = ConnectionUtil.getConnection();
 
-			String query = "SELECT  `id`, `student_id`, `department_id`, `active`  FROM student_class WHERE department_id = ?;";
+			String query = "SELECT  `id`, `student_id`, `department_id`, `active`  FROM student_class WHERE department_id = ?";
 			ps = conn.prepareStatement(query);
 			ps.setInt(1, departmentId);
 
@@ -98,9 +84,10 @@ public class StudentDepartmentDao {
 				departmentStudents.add(toRow(rs));
 			}
 
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
+			throw new PersistanceException(e);
 		} finally {
 			ConnectionUtil.close(conn, ps, rs);
 		}
@@ -115,11 +102,7 @@ public class StudentDepartmentDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<StudentDepartment> findByDepartmentName(String departmentName) throws Exception {
-		if (departmentName == null || departmentName.trim().isEmpty()) {
-			throw new StudentDepartmentValidationException(
-					"Invalid Department Name: Department Name cannot be null or empty");
-		}
+	public List<StudentDepartment> findByDepartmentName(String departmentName) throws PersistanceException {
 
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -129,7 +112,7 @@ public class StudentDepartmentDao {
 		try {
 			conn = ConnectionUtil.getConnection();
 
-			String query = "SELECT  `id`, `student_id`, `department_id`, `active` FROM student_class WHERE department_id = ( select id from departments where name=?);";
+			String query = "SELECT  `id`, `student_id`, `department_id`, `active` FROM student_class WHERE department_id = ( select id from departments where name=?)";
 			ps = conn.prepareStatement(query);
 			ps.setString(1, departmentName);
 			rs = ps.executeQuery();
@@ -138,9 +121,10 @@ public class StudentDepartmentDao {
 				departmentStudents.add(toRow(rs));
 			}
 
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
+			throw new PersistanceException(e);
 		} finally {
 			ConnectionUtil.close(conn, ps, rs);
 		}
@@ -154,21 +138,15 @@ public class StudentDepartmentDao {
 	 * @param studentId
 	 * @param departmentId
 	 * @return
-	 * @throws SQLException
+	 * @throws Exception
 	 */
-	public void update(int studentId, int departmentId) throws SQLException, StudentDepartmentValidationException {
-
-		if (studentId <= 0) {
-			throw new StudentDepartmentValidationException("Invalid Student ID: Student ID must be greater than zero");
-		}
-
-		if (departmentId <= 0) {
-			throw new StudentDepartmentValidationException("Invalid Department ID: Department ID must be greater than zero");
-		}
+	public boolean update(int studentId, int departmentId) throws PersistanceException {
 
 		Connection conn = null;
 		PreparedStatement ps = null;
-		StudentDepartment studDept = null;
+
+		boolean status = false;
+
 		System.out.println("updateStudentDepartment ==========================>");
 		System.out.println("studentId: " + studentId + " departmentId: " + departmentId);
 
@@ -183,19 +161,20 @@ public class StudentDepartmentDao {
 			int rowsAffected = ps.executeUpdate();
 
 			if (rowsAffected == 0) {
-				throw new StudentDepartmentValidationException("Update failed: No record found with studentId: " + studentId);
+				status = false;
+			} else {
+				status = true;
 			}
 
-			// System.out.println("Affected rows: ==========================> " +
-			// rowsAffected);
-			// studDept = this.findByStudentId(studentId);
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (SQLException e) {
 			System.out.println(e.getMessage());
+			e.printStackTrace();
+			throw new PersistanceException(e);
 		} finally {
 			ConnectionUtil.close(conn, ps);
 		}
+
+		return status;
 
 	}
 
@@ -204,23 +183,14 @@ public class StudentDepartmentDao {
 	 * @param studentId
 	 * @param departmentName
 	 * @return
-	 * @throws SQLException
+	 * @throws Exception
 	 */
-	public StudentDepartment update(int studentId, String departmentName)
-			throws SQLException, StudentDepartmentValidationException {
-
-		if (studentId <= 0) {
-			throw new StudentDepartmentValidationException("Invalid Student ID: Student ID must be greater than zero");
-		}
-		if (departmentName == null || departmentName.trim().isEmpty()) {
-			throw new StudentDepartmentValidationException(
-					"Invalid Department Name: Department Name cannot be null or empty");
-		}
+	public boolean update(int studentId, String departmentName) throws PersistanceException {
 
 		Connection conn = null;
 		PreparedStatement ps = null;
 
-		StudentDepartment studDept = null;
+		boolean status = false;
 
 		try {
 			conn = ConnectionUtil.getConnection();
@@ -235,19 +205,20 @@ public class StudentDepartmentDao {
 			System.out.println("Affected rows: ==========================> " + rowsAffected);
 
 			if (rowsAffected == 0) {
-				throw new StudentDepartmentValidationException("Update failed: No record found with studentId: " + studentId);
+				status = false;
+			} else {
+				status = true;
 			}
 
-			studDept = this.findByStudentId(studentId);
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (SQLException e) {
 			System.out.println(e.getMessage());
+			e.printStackTrace();
+			throw new PersistanceException(e);
 		} finally {
 			ConnectionUtil.close(conn, ps);
 		}
 
-		return studDept;
+		return status;
 
 	}
 
@@ -257,16 +228,12 @@ public class StudentDepartmentDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean updateStatus(int studentId) throws Exception {
-
-		if (studentId <= 0) {
-			throw new StudentDepartmentValidationException("Invalid Student ID: Student ID must be greater than zero");
-		}
+	public boolean updateStatus(int studentId) throws PersistanceException {
 
 		Connection conn = null;
 		PreparedStatement ps = null;
 
-		boolean isRemoved = false;
+		boolean status = false;
 
 		try {
 			conn = ConnectionUtil.getConnection();
@@ -276,16 +243,21 @@ public class StudentDepartmentDao {
 			int rowsAffected = ps.executeUpdate();
 			System.out.println("Affected rows: ==========================> " + rowsAffected);
 
-			isRemoved = rowsAffected > 0;
+			if (rowsAffected == 0) {
+				status = false;
+			} else {
+				status = true;
+			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (SQLException e) {
 			System.out.println(e.getMessage());
+			e.printStackTrace();
+			throw new PersistanceException(e);
 		} finally {
 			ConnectionUtil.close(conn, ps);
 		}
 
-		return isRemoved;
+		return status;
 
 	}
 
@@ -295,16 +267,16 @@ public class StudentDepartmentDao {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<Map<String, Integer>> count() throws Exception {
+	public List<Map<String, Integer>> count() throws PersistanceException {
+
 		Connection conn = null;
 		PreparedStatement ps = null;
-
 		List<Map<String, Integer>> response = new ArrayList<>();
 
 		try {
 
 			conn = ConnectionUtil.getConnection();
-			String query = "select department_id, count(*) as no_of_students from student_class sc, departments d where sc.department_id = d.id and sc.active=1 group by department_id;";
+			String query = "select department_id, count(*) as no_of_students from student_class sc, departments d where sc.department_id = d.id and sc.active=1 group by department_id";
 			ps = conn.prepareStatement(query);
 
 			ResultSet rs = ps.executeQuery();
@@ -318,9 +290,10 @@ public class StudentDepartmentDao {
 				response.add(map);
 			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (SQLException e) {
 			System.out.println(e.getMessage());
+			e.printStackTrace();
+			throw new PersistanceException(e);
 		} finally {
 			ConnectionUtil.close(conn, ps);
 		}
@@ -328,7 +301,7 @@ public class StudentDepartmentDao {
 
 	}
 
-	public List<StudentDepartmentDetailsDto> findStudentDetails() throws Exception {
+	public List<StudentDepartmentDetailsDto> findStudentDetails() throws PersistanceException {
 
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -352,10 +325,11 @@ public class StudentDepartmentDao {
 
 				response.add(map);
 			}
-		} catch (Exception e) {
+		} catch (SQLException e) {
 
 			System.out.println(e.getMessage());
 			e.printStackTrace();
+			throw new PersistanceException(e);
 
 		} finally {
 			ConnectionUtil.close(conn, ps, rs);
@@ -365,15 +339,7 @@ public class StudentDepartmentDao {
 
 	}
 
-	public String findStudentDepartmentByEmail(String email) throws InvalidEmailException, Exception,StudentNotFoundException  {
-
-		// Check if email is valid
-		String regex = "^[A-Za-z0-9+_.-]+@(.+)$";
-		Pattern pattern = Pattern.compile(regex);
-		Matcher matcher = pattern.matcher(email);
-		if (!matcher.matches()) {
-			throw new InvalidEmailException("Invalid email format: " + email);
-		}
+	public String findStudentDepartmentByEmail(String email) throws PersistanceException {
 
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -393,13 +359,11 @@ public class StudentDepartmentDao {
 
 			if (rs.next()) {
 				response = rs.getString("name");
-			} else {
-				throw new StudentNotFoundException("Student not found with email: " + email);
-			}
+			} 
 
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
-			throw new Exception(e.getMessage());
+			throw new PersistanceException(e.getMessage());
 		} finally {
 			ConnectionUtil.close(conn, ps, rs);
 		}
@@ -437,8 +401,8 @@ public class StudentDepartmentDao {
 
 			return response;
 
-		} catch (Exception e) {
-			throw new Exception("Failed to access student details");
+		} catch (SQLException e) {
+			throw new PersistanceException("Failed to access student details");
 		} finally {
 			ConnectionUtil.close(conn, ps, rs);
 		}
@@ -490,7 +454,7 @@ public class StudentDepartmentDao {
 	 * @return
 	 * @throws SQLException
 	 */
-	private StudentDepartment toRow(ResultSet rs) throws Exception {
+	private StudentDepartment toRow(ResultSet rs) throws SQLException {
 
 		StudentDepartment studentDept = new StudentDepartment();
 		studentDept.setId(rs.getInt("id"));

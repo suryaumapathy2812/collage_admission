@@ -2,107 +2,181 @@ package in.suryaumapathy.projects.collage_admission.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
+import in.suryaumapathy.projects.collage_admission.dao.DepartmentDao;
+import in.suryaumapathy.projects.collage_admission.dao.StudentDao;
 import in.suryaumapathy.projects.collage_admission.dao.StudentDepartmentDao;
 import in.suryaumapathy.projects.collage_admission.dto.StudentDepartmentDetailsDto;
 import in.suryaumapathy.projects.collage_admission.exception.InvalidDepartmentException;
 import in.suryaumapathy.projects.collage_admission.exception.InvalidEmailException;
 import in.suryaumapathy.projects.collage_admission.exception.InvalidStudentException;
+import in.suryaumapathy.projects.collage_admission.exception.PersistanceException;
+import in.suryaumapathy.projects.collage_admission.exception.ServiceException;
+import in.suryaumapathy.projects.collage_admission.exception.ValidationException;
 import in.suryaumapathy.projects.collage_admission.model.StudentDepartment;
+import in.suryaumapathy.projects.collage_admission.utils.StringUtil;
+import in.suryaumapathy.projects.collage_admission.validation.DepartmentValidator;
+import in.suryaumapathy.projects.collage_admission.validation.StudentValidator;
 
 public class StudentDepartmentService {
 
-	StudentDepartmentDao dao = null;
+	private StudentDao studentDao = new StudentDao();
+	private DepartmentDao deptDao = new DepartmentDao();
+	private StudentDepartmentDao studentDepartmentDao = new StudentDepartmentDao();
 
-	public StudentDepartmentService() {
-		this.dao = new StudentDepartmentDao();
-	}
+	/**
+	 * 
+	 * @param studentId
+	 * @return
+	 * @throws Exception
+	 */
+	public StudentDepartment getStudentDepartment(int studentId) throws ValidationException, ServiceException {
 
-	public StudentDepartment getStudentDepartment(int studentId) throws Exception {
-
-		// Validation
 		if (studentId <= 0) {
-			throw new InvalidStudentException("Invalid Student Id");
+			throw new ValidationException("Invalid Student Id");
 		}
 
-		StudentDepartment studentDept = this.dao.findByStudentId(studentId);
-		return studentDept;
+		try {
+			// Validation
+
+			StudentValidator.rejectIfStudentNotFound(studentId);
+
+			StudentDepartment studentDept = this.studentDepartmentDao.findByStudentId(studentId);
+			if (studentDept == null) {
+				throw new ValidationException("Department not found for studentId: " + studentId);
+			}
+			return studentDept;
+
+		} catch (PersistanceException e) {
+			e.printStackTrace();
+			throw new ServiceException(e);
+		}
 	}
 
-	public List<StudentDepartment> getDepartmentStudent(int departmentId) throws Exception {
+	public List<StudentDepartment> getDepartmentStudent(int departmentId) throws ValidationException, ServiceException {
 
 		// Validation
 		if (departmentId <= 0) {
 			throw new InvalidDepartmentException("Invalid Department Id");
 		}
 
-		List<StudentDepartment> departmentStudents = this.dao.findByDepartmentId(departmentId);
+		List<StudentDepartment> departmentStudents;
+		try {
+			DepartmentValidator.rejectIfDepartmentNotFound(departmentId);
+			departmentStudents = this.studentDepartmentDao.findByDepartmentId(departmentId);
+
+			if (departmentStudents == null) {
+				throw new ValidationException("Students Not Found For departmentId: " + departmentId);
+			}
+
+		} catch (PersistanceException e) {
+			e.printStackTrace();
+			throw new ServiceException(e);
+		}
 		return departmentStudents;
 	}
 
-	public List<StudentDepartment> getDepartmentStudent(String departmentName) throws Exception {
+	public List<StudentDepartment> getDepartmentStudent(String departmentName)
+			throws ValidationException, ServiceException {
 
 		// Validation
-		if (departmentName == null || departmentName.trim().equals("")) {
+		if (!StringUtil.isValidString(departmentName)) {
 			throw new InvalidDepartmentException("Invalid Department Name");
 		}
 
-		List<StudentDepartment> departmentStudents = this.dao.findByDepartmentName(departmentName);
+		List<StudentDepartment> departmentStudents;
+		try {
+			DepartmentValidator.rejectIfDepartmentNotFound(departmentName);
+
+			departmentStudents = this.studentDepartmentDao.findByDepartmentName(departmentName);
+			if (departmentStudents == null) {
+				throw new ValidationException("Students not found for departmentName: " + departmentName);
+			}
+
+		} catch (PersistanceException e) {
+			e.printStackTrace();
+			throw new ServiceException(e);
+		}
 		return departmentStudents;
 	}
 
-	public StudentDepartment updateStudentDepartment(int studentId, String departmentName) throws Exception {
+	public boolean updateStudentDepartment(int studentId, String departmentName)
+			throws ValidationException, ServiceException {
 
-		if (studentId > 0) {
+		if (studentId <= 0) {
 			throw new InvalidStudentException("Invalid Student ID");
 		}
 
-		if (departmentName == null || departmentName.trim().equals("")) {
+		if (!StringUtil.isValidString(departmentName)) {
 			throw new InvalidDepartmentException("Invalid Department Name");
 		}
 
-		StudentDepartment updatedStudentDepartment = this.dao.update(studentId, departmentName);
-		return updatedStudentDepartment;
+		boolean status;
+
+		try {
+
+			StudentValidator.rejectIfStudentNotFound(studentId);
+			DepartmentValidator.rejectIfDepartmentNotFound(departmentName);
+			status = this.studentDepartmentDao.update(studentId, departmentName);
+
+		} catch (PersistanceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new ServiceException(e);
+		}
+		return status;
 	}
 
-	public void updateStudentStatus(int studentId) throws Exception {
+	public void updateStudentStatus(int studentId) throws ValidationException, ServiceException {
 
 		if (studentId > 0) {
 			throw new InvalidStudentException("Invalid Student ID");
 		}
 
-		this.dao.updateStatus(studentId);
+		try {
+			this.studentDepartmentDao.updateStatus(studentId);
+		} catch (PersistanceException e) {
+			e.printStackTrace();
+			throw new ServiceException(e);
+		}
 	}
 
-	public List<Map<String, Integer>> studentCount() throws Exception {
-
-		List<Map<String, Integer>> studentCount = this.dao.count();
+	public List<Map<String, Integer>> studentCount() throws ValidationException, ServiceException {
+		List<Map<String, Integer>> studentCount;
+		try {
+			studentCount = this.studentDepartmentDao.count();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new ServiceException(e);
+		}
 		return studentCount;
 
 	}
 
-	public List<StudentDepartmentDetailsDto> studentDeptDetails() throws Exception {
-		List<StudentDepartmentDetailsDto> studentDetails = this.dao.findStudentDetails();
-		return studentDetails;
+	public List<StudentDepartmentDetailsDto> studentDeptDetails() throws ValidationException, ServiceException {
+		try {
+			List<StudentDepartmentDetailsDto> studentDetails = this.studentDepartmentDao.findStudentDetails();
+			return studentDetails;
+		} catch (PersistanceException e) {
+			e.printStackTrace();
+			throw new ServiceException(e);
+		}
 	}
 
-	public String findStudentDepartmentByEmail(String email) throws Exception {
+	public String findStudentDepartmentByEmail(String email) throws ValidationException, ServiceException {
 
-		System.out.println(email);
-		if (email == null || email.trim().equals("")) {
-			throw new InvalidEmailException("Invalid Email Address");
-		}
-
-		String regex = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
-		Boolean isMatch = Pattern.matches(regex, email);
-
-		if (isMatch == false) {
+		Boolean isMatch = StringUtil.isValidEmail(email);
+		if (!isMatch) {
 			throw new InvalidEmailException("Invalid Email Pattern");
 		}
 
-		String departmentName = this.dao.findStudentDepartmentByEmail(email);
-		return departmentName;
+		try {
+			String departmentName = this.studentDepartmentDao.findStudentDepartmentByEmail(email);
+			return departmentName;
+		} catch (PersistanceException e) {
+			e.printStackTrace();
+			throw new ServiceException(e);
+		}
 
 	}
 
